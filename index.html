@@ -483,6 +483,12 @@ a.card.pcard{display:grid;gap:8px;text-decoration:none;padding:12px 12px 18px;al
 .pimg img{position:absolute;inset:8%;width:84%;height:84%;object-fit:contain;transition:scale .25s cubic-bezier(.3,1.6,.5,1)}
 .pcard:hover .pimg img{scale:1.05}
 .pimg.big img{inset:6%;width:88%;height:88%}
+button.lnk[data-act=pnumAll]{background:none;border:0;padding:4px 0;font:inherit;font-weight:700;color:var(--verde);text-decoration:underline;text-underline-offset:4px;cursor:pointer;justify-self:start}
+.pimg .pnum{position:absolute;left:14px;top:14px;background:var(--verde);color:var(--crema);font-weight:800;border-radius:999px;padding:4px 12px}
+.numchips{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.numchips .vchip span{display:grid;justify-items:center;gap:2px;padding:6px 4px}
+.numchips .vchip img{width:40px;height:40px;object-fit:contain}
+.numchips .vchip b{font-size:14px;line-height:1}
 .pthumbs{display:flex;gap:10px;flex-wrap:wrap}
 .pthumbs button{width:72px;height:72px;padding:6px;border-radius:16px;background:rgba(65,157,153,.14);border:2.5px solid transparent;cursor:pointer}
 .pthumbs button[aria-pressed=true]{border-color:var(--fg)}
@@ -1530,8 +1536,8 @@ const PRODUCTS=[
  {id:109,n:'Polo Tambora',cat:'Ropa',p:1200,d:'Polo de manga corta verde petróleo. Al frente, el logo y una tambora; en la espalda, el sol del festival.',img:'polo-tambora',v:{Talla:TALLAS},st:{},def:50},
  {id:110,n:'Tote Ilustraciones',cat:'Accesorios',p:750,d:'Tote bag crema con asas verdes y los instrumentos del festival ilustrados.',img:'tote-ilustraciones',v:{},st:{},def:50},
  {id:111,n:'Abanico Buena Música',cat:'Accesorios',p:400,d:'Abanico plegable con el logo y los instrumentos del festival.',img:'abanico',v:{},st:{},def:50},
- {id:112,n:'Pines de instrumentos',cat:'Recuerdos',p:150,d:'Pines con los instrumentos del festival. Precio por unidad.',img:'pines',v:{},st:{},def:50},
- {id:113,n:'Parches bordados',cat:'Recuerdos',p:250,d:'Parches bordados con los instrumentos del festival. Precio por unidad.',img:'parches',v:{},st:{},def:50}];
+ {id:112,n:'Pines de instrumentos',cat:'Recuerdos',p:150,d:'Pines con los instrumentos del festival. Precio por unidad: elige el número del pin que quieres. Para llevar varios, añádelos uno por uno.',img:'pines',v:{'Número':Array.from({length:22},(_,i)=>'N.º '+(i+1))},st:{},def:50},
+ {id:113,n:'Parches bordados',cat:'Recuerdos',p:250,d:'Parches bordados con los instrumentos del festival. Precio por unidad: elige el número del parche que quieres. Para llevar varios, añádelos uno por uno.',img:'parches',v:{'Número':Array.from({length:22},(_,i)=>'N.º '+(i+1))},st:{},def:50}];
 function pimgKey(p,color){return p.v.Color?p.img+'-'+COLIMG[color||p.v.Color[0]]:p.img}
 const RENDERS=['Render: escenario principal','Render: zona de stands','Render: área del público','Render: acceso y circulación','Render: vista aérea del recinto'];
 const ADM_APPS=[];
@@ -1641,7 +1647,8 @@ function qrArt(label){const n=25;let s=hsh(S.boleta?S.boleta.code:'ASBM');const 
 function posterArt(a,big){const q=typeof a.id==='number'?a.id:1;const t=['rojo','verde','naranja','agua'][((q-1)+Math.floor((q-1)/4)*2)%4];return `<span class="pst t-${t}${big?' big':''}" role="img" aria-label="Póster de ${esc(a.n)}, ${esc(a.g)}">${ic(GI[a.g]||'mic','pst-i')}<span class="pst-n">${a.n}</span><span class="pst-g">${a.g}</span></span>`}
 function coverArt(p,ratio,big){const t=['rojo','verde','agua'][hsh(p.t)%3];const art=p.cat==='artistas'?(GI[(ARTISTS.find(a=>p.href==='c03-'+a.id)||{}).g]||'mic'):CI[p.cat];
  return `<div class="art cov t-${t}${big?' cov-long':''}" style="aspect-ratio:${ratio||'16/10'};--rot:-10deg" role="img" aria-label="Portada: ${esc(p.t)}">${ic(art,'art-i')}</div>`}
-function prodArt(p,big,color){if(p.img){const k=pimgKey(p,color);return `<div class="pimg${big?' big':''}"><img src="${MERCH}${k}${big?'':'-card'}.webp" alt="${esc(p.n)}${p.v.Color?' · '+esc(color||p.v.Color[0]):''}" loading="${big?'eager':'lazy'}" decoding="async"></div>`}const t=['naranja','verde','agua','crema','verde','naranja'][(p.id-1)%6];return `<div class="art t-${t}" style="aspect-ratio:1/1;--rot:${p.id%2?-8:7}deg" role="img" aria-label="Ilustración de ${esc(p.n)}">${ic(PI[p.id]||'sol','art-i')}${big?`<span class="art-cap">Ilustración provisional · ${esc(p.n)}</span>`:''}</div>`}
+const numOf=o=>String(o).replace('N.º ','');
+function prodArt(p,big,sel){const color=sel&&typeof sel==='object'?sel.Color:sel;const num=big&&sel&&sel['Número'];if(p.img&&num){return `<div class="pimg big"><img src="${MERCH}${p.img}-${numOf(num).padStart(2,'0')}.webp" alt="${esc(p.n)} · ${esc(num)}"><span class="pnum">${esc(num)}</span></div><button type="button" class="lnk" data-act="pnumAll" data-arg="${p.id}">Ver todos los números</button>`}if(p.img){const k=pimgKey(p,color);return `<div class="pimg${big?' big':''}"><img src="${MERCH}${k}${big?'':'-card'}.webp" alt="${esc(p.n)}${p.v.Color?' · '+esc(color||p.v.Color[0]):''}" loading="${big?'eager':'lazy'}" decoding="async"></div>`}const t=['naranja','verde','agua','crema','verde','naranja'][(p.id-1)%6];return `<div class="art t-${t}" style="aspect-ratio:1/1;--rot:${p.id%2?-8:7}deg" role="img" aria-label="Ilustración de ${esc(p.n)}">${ic(PI[p.id]||'sol','art-i')}${big?`<span class="art-cap">Ilustración provisional · ${esc(p.n)}</span>`:''}</div>`}
 
 function stickers(list){return list.map(([cls,v,inner])=>`<div class="stk ${cls}" style="${v}">${inner}</div>`).join('')}
 const patI=(k,n)=>Array.from({length:n},()=>ic(k)).join('');
@@ -2230,10 +2237,10 @@ def('t02',{m:'Tienda',c:'T02',t:'Producto',f:'F14',route:'t02-101',n:['Galería 
  UI.sel=UI.sel||{};const sel=UI.sel[pr.id]=UI.sel[pr.id]||{};const keys=Object.keys(pr.v);const complete=keys.every(k=>sel[k]);const k=vkey(pr,sel);const stk=complete?stockOf(pr,k):null;
  const avail=soldOut(pr)?chip('Agotado','dash'):!complete?`<span class="tiny">Elige ${keys.map(x=>x.toLowerCase()).join(' y ')} para ver la disponibilidad.</span>`:stk===0?chip('Agotado en esta combinación','dash'):stk<=3?chip('Quedan '+stk):chip('Disponible');
  const addBtn=soldOut(pr)||(complete&&stk===0)?btn('Agotado',{dis:1,block:1})+btn('Avísame si vuelve · Fase 3',{dis:1,sm:1,block:1}):btn('Añadir al carrito',{act:'add',arg:pr.id,block:1});
- return `<div class="wrap">${crumbs([['t01','Tienda'],['',pr.n]])}<div class="split" style="padding-block:24px 72px"><div class="stack">${prodArt(pr,1,sel.Color)}${pr.v.Color?`<div class="pthumbs" role="group" aria-label="Colores">${pr.v.Color.map(c=>`<button type="button" data-act="pcolor" data-arg="${pr.id}|${c}" aria-pressed="${(sel.Color||pr.v.Color[0])===c}" aria-label="Ver en ${c}"><img src="${MERCH}${pimgKey(pr,c)}-card.webp" alt="" loading="lazy"></button>`).join('')}</div>`:''}</div>
+ return `<div class="wrap">${crumbs([['t01','Tienda'],['',pr.n]])}<div class="split" style="padding-block:24px 72px"><div class="stack">${prodArt(pr,1,sel)}${pr.v.Color?`<div class="pthumbs" role="group" aria-label="Colores">${pr.v.Color.map(c=>`<button type="button" data-act="pcolor" data-arg="${pr.id}|${c}" aria-pressed="${(sel.Color||pr.v.Color[0])===c}" aria-label="Ver en ${c}"><img src="${MERCH}${pimgKey(pr,c)}-card.webp" alt="" loading="lazy"></button>`).join('')}</div>`:''}</div>
  <div class="stack lg"><div class="stack sm"><p class="eyebrow">${pr.cat}</p><h1>${pr.n}</h1><p style="font-size:22px;font-weight:800" class="num">${money(pr.p)}</p></div><p class="muted">${pr.d}</p>
  ${UI.addErr?alertBox('err',UI.addErr):''}
- ${keys.map(key=>`<fieldset class="fld"><legend>${key}${sel[key]?': '+sel[key]:''}</legend><div class="vchips">${pr.v[key].map(o=>`<label class="vchip"><input type="radio" id="v-${pr.id}-${key}-${o.replace(/\s/g,'')}" name="${key}" value="${o}"${sel[key]===o?' checked':''} data-chg="sel" data-pid="${pr.id}"><span>${o}</span></label>`).join('')}</div></fieldset>`).join('')}
+ ${keys.map(key=>`<fieldset class="fld"><legend>${key}${sel[key]?': '+sel[key]:''}</legend><div class="vchips${key==='Número'?' numchips':''}">${pr.v[key].map(o=>`<label class="vchip"><input type="radio" id="v-${pr.id}-${key}-${o.replace(/[\s.º]/g,'')}" name="${key}" value="${o}"${sel[key]===o?' checked':''} data-chg="sel" data-pid="${pr.id}"><span>${key==='Número'?`<img src="${MERCH}${pr.img}-${numOf(o).padStart(2,'0')}.webp" alt="" loading="lazy"><b>${numOf(o)}</b>`:o}</span></label>`).join('')}</div></fieldset>`).join('')}
  ${keys.includes('Talla')?`<details class="acc"><summary>Guía de tallas</summary><div class="ans"><div class="tblw"><table class="tbl" style="min-width:0"><thead><tr><th>Talla</th><th>Pecho (cm)</th><th>Largo (cm)</th></tr></thead><tbody>${['S','M','L','XL'].map(t=>`<tr><td>${t}</td><td>Por definir</td><td>Por definir</td></tr>`).join('')}</tbody></table></div></div></details>`:''}
  <div>${avail}</div>
  <div class="fld"><label for="qty">Cantidad</label><div class="qty"><button type="button" data-act="qtyIn" data-arg="-1" aria-label="Restar uno">−</button><input id="qty" inputmode="numeric" value="${UI.qty||1}" aria-label="Cantidad"><button type="button" data-act="qtyIn" data-arg="1" aria-label="Sumar uno">+</button></div></div>
@@ -2589,6 +2596,7 @@ function go(r){if(location.hash==='#'+r)render();else location.hash=r}
 function loginAs(role,email,name){if(role==='equipo')role='asistente';S.role=role;S.email=email;S.name=name;if(role==='artista'&&profPct()<50){} const p=S.pending;S.pending=null;UI={};save();go(p||homeFor())}
 function nameFromEmail(e){const l=e.split('@')[0].replace(/[._-]+/g,' ').replace(/\b(artista|equipo)\b/g,'').trim();return (l?l.replace(/\b\w/g,c=>c.toUpperCase()):'Persona')}
 const ACT={
+  pnumAll(a){UI.sel=UI.sel||{};if(UI.sel[a])delete UI.sel[a]['Número'];render()},
   pcolor(a){const [id,c]=String(a).split('|');UI.sel=UI.sel||{};UI.sel[id]=UI.sel[id]||{};UI.sel[id].Color=c;UI.addErr=null;render()},
  menu(){UI.menu=!UI.menu;render()},
  gscroll(d){const g=document.querySelector('.gantt');if(g)g.scrollBy({left:(+d)*Math.max(240,g.clientWidth*.6),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})},

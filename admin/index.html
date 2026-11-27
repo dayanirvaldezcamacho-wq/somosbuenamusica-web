@@ -482,8 +482,6 @@ a.card.pcard{display:grid;gap:8px;text-decoration:none;padding:12px 12px 18px;al
 .pimg img{position:absolute;inset:8%;width:84%;height:84%;object-fit:contain;transition:scale .25s cubic-bezier(.3,1.6,.5,1)}
 .pcard:hover .pimg img{scale:1.05}
 .pimg.big img{inset:6%;width:88%;height:88%}
-button.lnk[data-act=pnumAll]{background:none;border:0;padding:4px 0;font:inherit;font-weight:700;color:var(--verde);text-decoration:underline;text-underline-offset:4px;cursor:pointer;justify-self:start}
-.pimg .pnum{position:absolute;left:14px;top:14px;background:var(--verde);color:var(--crema);font-weight:800;border-radius:999px;padding:4px 12px}
 .numchips{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
 .numchips .vchip span{display:grid;justify-items:center;gap:2px;padding:6px 4px}
 .numchips .vchip img{width:40px;height:40px;object-fit:contain}
@@ -1535,8 +1533,8 @@ const PRODUCTS=[
  {id:109,n:'Polo Tambora',cat:'Ropa',p:1200,d:'Polo de manga corta verde petróleo. Al frente, el logo y una tambora; en la espalda, el sol del festival.',img:'polo-tambora',v:{Talla:TALLAS},st:{},def:50},
  {id:110,n:'Tote Ilustraciones',cat:'Accesorios',p:750,d:'Tote bag crema con asas verdes y los instrumentos del festival ilustrados.',img:'tote-ilustraciones',v:{},st:{},def:50},
  {id:111,n:'Abanico Buena Música',cat:'Accesorios',p:400,d:'Abanico plegable con el logo y los instrumentos del festival.',img:'abanico',v:{},st:{},def:50},
- {id:112,n:'Pines de instrumentos',cat:'Recuerdos',p:150,d:'Pines con los instrumentos del festival. Precio por unidad: elige el número del pin que quieres. Para llevar varios, añádelos uno por uno.',img:'pines',v:{'Número':Array.from({length:22},(_,i)=>'N.º '+(i+1))},st:{},def:50},
- {id:113,n:'Parches bordados',cat:'Recuerdos',p:250,d:'Parches bordados con los instrumentos del festival. Precio por unidad: elige el número del parche que quieres. Para llevar varios, añádelos uno por uno.',img:'parches',v:{'Número':Array.from({length:22},(_,i)=>'N.º '+(i+1))},st:{},def:50}];
+ {id:112,n:'Pines de instrumentos',cat:'Recuerdos',p:150,d:'Pines con los instrumentos del festival. Precio por unidad. Elige los números de los pines que quieres.',img:'pines',v:{'Número':Array.from({length:22},(_,i)=>'N.º '+(i+1))},st:{},def:50},
+ {id:113,n:'Parches bordados',cat:'Recuerdos',p:250,d:'Parches bordados con los instrumentos del festival. Precio por unidad. Elige los números de los parches que quieres.',img:'parches',v:{'Número':Array.from({length:22},(_,i)=>'N.º '+(i+1))},st:{},def:50}];
 function pimgKey(p,color){return p.v.Color?p.img+'-'+COLIMG[color||p.v.Color[0]]:p.img}
 const RENDERS=['Render: escenario principal','Render: zona de stands','Render: área del público','Render: acceso y circulación','Render: vista aérea del recinto'];
 const ADM_APPS=[];
@@ -2232,13 +2230,13 @@ def('t01',{m:'Tienda',c:'T01',t:'Tienda',f:'F14',n:['Explorar y usar el carrito 
 
 def('t02',{m:'Tienda',c:'T02',t:'Producto',f:'F14',route:'t02-101',n:['Galería (imagen principal y miniaturas), nombre, precio, descripción, variantes, guía de tallas, disponibilidad por combinación y cantidad.','Productos reales de la merch. Precios sugeridos pendientes de confirmar; existencias por definir.','Añadir sin elegir variante → error. Cantidad mayor que las existencias → error.','Móvil: barra inferior fija con «Añadir al carrito».'],
  r(p){if(S.tienda!=='activa')return {redirect:'t01'};const pr=PRODUCTS.find(x=>x.id===+p);if(!pr)return {redirect:'e01'};
- UI.sel=UI.sel||{};const sel=UI.sel[pr.id]=UI.sel[pr.id]||{};const keys=Object.keys(pr.v);const complete=keys.every(k=>sel[k]);const k=vkey(pr,sel);const stk=complete?stockOf(pr,k):null;
+ UI.sel=UI.sel||{};const sel=UI.sel[pr.id]=UI.sel[pr.id]||{};const keys=Object.keys(pr.v);const filled=k=>Array.isArray(sel[k])?sel[k].length>0:!!sel[k];const complete=keys.every(filled);const k=vkey(pr,sel);const stk=complete?(Array.isArray(sel['Número'])?Math.min(...sel['Número'].map(n=>stockOf(pr,vkey(pr,{...sel,'Número':n})))):stockOf(pr,k)):null;
  const avail=soldOut(pr)?chip('Agotado','dash'):!complete?`<span class="tiny">Elige ${keys.map(x=>x.toLowerCase()).join(' y ')} para ver la disponibilidad.</span>`:stk===0?chip('Agotado en esta combinación','dash'):stk<=3?chip('Quedan '+stk):chip('Disponible');
  const addBtn=soldOut(pr)||(complete&&stk===0)?btn('Agotado',{dis:1,block:1})+btn('Avísame si vuelve · Fase 3',{dis:1,sm:1,block:1}):btn('Añadir al carrito',{act:'add',arg:pr.id,block:1});
  return `<div class="wrap">${crumbs([['t01','Tienda'],['',pr.n]])}<div class="split" style="padding-block:24px 72px"><div class="stack">${prodArt(pr,1,sel)}${pr.v.Color?`<div class="pthumbs" role="group" aria-label="Colores">${pr.v.Color.map(c=>`<button type="button" data-act="pcolor" data-arg="${pr.id}|${c}" aria-pressed="${(sel.Color||pr.v.Color[0])===c}" aria-label="Ver en ${c}"><img src="${MERCH}${pimgKey(pr,c)}-card.webp" alt="" loading="lazy"></button>`).join('')}</div>`:''}</div>
  <div class="stack lg"><div class="stack sm"><p class="eyebrow">${pr.cat}</p><h1>${pr.n}</h1><p style="font-size:22px;font-weight:800" class="num">${money(pr.p)}</p></div><p class="muted">${pr.d}</p>
  ${UI.addErr?alertBox('err',UI.addErr):''}
- ${keys.map(key=>`<fieldset class="fld"><legend>${key}${sel[key]?': '+sel[key]:''}</legend><div class="vchips${key==='Número'?' numchips':''}">${pr.v[key].map(o=>`<label class="vchip"><input type="radio" id="v-${pr.id}-${key}-${o.replace(/[\s.º]/g,'')}" name="${key}" value="${o}"${sel[key]===o?' checked':''} data-chg="sel" data-pid="${pr.id}"><span>${key==='Número'?`<img src="${MERCH}${pr.img}-${numOf(o).padStart(2,'0')}.webp" alt="" loading="lazy"><b>${numOf(o)}</b>`:o}</span></label>`).join('')}</div></fieldset>`).join('')}
+ ${keys.map(key=>`<fieldset class="fld"><legend>${key}${Array.isArray(sel[key])?(sel[key].length?': '+sel[key].map(numOf).join(', '):''):sel[key]?': '+sel[key]:''}</legend>${key==='Número'?'<p class="tiny" style="margin:0 0 8px">Puedes elegir varios. Toca de nuevo un número para quitarlo.</p>':''}<div class="vchips${key==='Número'?' numchips':''}">${pr.v[key].map(o=>`<label class="vchip">${key==='Número'?`<input type="checkbox" id="v-${pr.id}-n${numOf(o)}" name="${key}" value="${o}"${(sel[key]||[]).includes(o)?' checked':''} data-chg="pnum" data-pid="${pr.id}" aria-label="${o}">`:`<input type="radio" id="v-${pr.id}-${key}-${o.replace(/[\s.º]/g,'')}" name="${key}" value="${o}"${sel[key]===o?' checked':''} data-chg="sel" data-pid="${pr.id}">`}<span>${key==='Número'?`<img src="${MERCH}${pr.img}-${numOf(o).padStart(2,'0')}.webp" alt="" loading="lazy"><b>${numOf(o)}</b>`:o}</span></label>`).join('')}</div></fieldset>`).join('')}
  ${keys.includes('Talla')?`<details class="acc"><summary>Guía de tallas</summary><div class="ans"><div class="tblw"><table class="tbl" style="min-width:0"><thead><tr><th>Talla</th><th>Pecho (cm)</th><th>Largo (cm)</th></tr></thead><tbody>${['S','M','L','XL'].map(t=>`<tr><td>${t}</td><td>Por definir</td><td>Por definir</td></tr>`).join('')}</tbody></table></div></div></details>`:''}
  <div>${avail}</div>
  <div class="fld"><label for="qty">Cantidad</label><div class="qty"><button type="button" data-act="qtyIn" data-arg="-1" aria-label="Restar uno">−</button><input id="qty" inputmode="numeric" value="${UI.qty||1}" aria-label="Cantidad"><button type="button" data-act="qtyIn" data-arg="1" aria-label="Sumar uno">+</button></div></div>
@@ -2622,7 +2620,10 @@ const ACT={
  demoFiles(){UI.files=[{n:'escenario-noche.jpg',s:3.2*1048576},{n:'publico-01.png',s:5.8*1048576},{n:'video-corto.mov',s:22*1048576,e:'Formato no admitido. Usa JPG o PNG.'}];UI.upErr=null;render()},
  rmFile(i){UI.files.splice(+i,1);render()},
  add(pid){const pr=PRODUCTS.find(x=>x.id===+pid);const sel=(UI.sel||{})[pr.id]||{};const keys=Object.keys(pr.v);const q=Math.max(1,parseInt((document.getElementById('qty')||{}).value||UI.qty||1,10)||1);
-  if(!keys.every(k=>sel[k])){UI.addErr='Elige '+keys.map(x=>x.toLowerCase()).join(' y ')+' antes de añadir.';render();return}
+  if(!keys.every(k=>Array.isArray(sel[k])?sel[k].length:sel[k])){UI.addErr=keys.includes('Número')?'Elige al menos un número antes de añadir.':'Elige '+keys.map(x=>x.toLowerCase()).join(' y ')+' antes de añadir.';render();return}
+  if(Array.isArray(sel['Número'])){const nums=sel['Número'];if(takeErr()){UI.addErr='No se pudo añadir al carrito. Inténtalo de nuevo.';render();return}
+   nums.forEach(n=>{const k=vkey(pr,{...sel,'Número':n});const l=S.cart.find(l=>l.pid===pr.id&&l.k===k);if(l)l.q+=q;else S.cart.push({pid:pr.id,k,q})});
+   UI.sel[pr.id]['Número']=[];UI.addErr=null;UI.qty=1;save();render();toast(nums.length>1?`Añadidos ${nums.length} diseños al carrito`:'Añadido al carrito',`<a href="#t03">Ver carrito</a><button type="button" data-act="hideToast">Seguir comprando</button>`);return}
   const k=vkey(pr,sel);const st=stockOf(pr,k);const inCart=(S.cart.find(l=>l.pid===pr.id&&l.k===k)||{q:0}).q;
   if(q+inCart>st){UI.addErr=`Solo quedan ${st} unidades${inCart?` y ya tienes ${inCart} en el carrito`:''}. Ajusta la cantidad.`;render();return}
   if(takeErr()){UI.addErr='No se pudo añadir al carrito. Inténtalo de nuevo.';render();return}
@@ -2651,6 +2652,7 @@ const ACT={
  reset(){try{localStorage.removeItem('asbm-hifi-v2')}catch(e){}S=SEED();UI={};save();go('p01');drawScn()}
 };
 const CHG={
+ pnum(v,el){const pid=+el.dataset.pid;UI.sel=UI.sel||{};const o=UI.sel[pid]=UI.sel[pid]||{};const a=(o['Número']||[]).filter(x=>x!==el.value);if(el.checked)a.push(el.value);o['Número']=PRODUCTS.find(p=>p.id===pid).v['Número'].filter(x=>a.includes(x));UI.addErr=null;UI.refocus=el.id;render()},
  sel(v,el){const pid=+el.dataset.pid;UI.sel=UI.sel||{};UI.sel[pid]=UI.sel[pid]||{};UI.sel[pid][el.name]=v;UI.addErr=null;UI.refocus=el.id;render()},
  ent(v){UI.ent=v;render()},
  met(v){UI.met=v;render()},

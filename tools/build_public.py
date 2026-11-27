@@ -18,8 +18,13 @@ rep("function gate(req,route){", "function gate(req,route){  if(req==='equipo')r
 rep("function loginAs(role,email,name){", "function loginAs(role,email,name){if(role==='equipo')role='asistente';")
 rep("if(k==='role'){", "if(k==='role'){if(v==='equipo')v='asistente';")
 # 4. Si quedó un rol de equipo guardado en el navegador, se descarta
-rep("const loggedIn=()=>", "if(S.role==='equipo'){S.role='visitante';S.name='';S.email=''}\nconst loggedIn=()=>")
-# 5. En el dominio propio, el icono se sirve como archivo (mejor caché)
+rep("const loggedIn=()=>", "if(S.role==='equipo'){S.role='visitante';S.name='';S.email=''}\nS.notesOpen=false;S.device='desk';\nconst loggedIn=()=>")
+# 5. Ninguna herramienta de prototipo en la web pública: notas, índice, escenarios ni vista de móvil
+rep("const notesOpen=S.notesOpen==null?window.innerWidth>1300:S.notesOpen;", "const notesOpen=false;S.device='desk';")
+rep('body{background:#2a2a28;', 'body{background:#F6E3CD;')
+rep('<aside id="notes" class="notes-p" hidden', '<aside id="notes" class="notes-p" hidden inert')
+rep('.proto{display:none!important;', '#notes,#idx,#scn,.notes-p,.drawer{display:none!important}\n.proto{display:none!important;')
+# 6. En el dominio propio, el icono se sirve como archivo (mejor caché)
 import re as _re
 s = _re.sub(r'<link rel="icon" type="image/svg\+xml" href="data:[^"]+">', '<link rel="icon" href="/favicon.ico" sizes="any">\n<link rel="icon" type="image/svg+xml" href="/favicon.svg">', s, count=1)
 (root / 'index.html').write_text(s, encoding='utf-8')

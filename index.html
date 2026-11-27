@@ -57,7 +57,8 @@ html,body,*{scrollbar-width:none}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{background:#2a2a28;color:var(--verde)}
+html,html,body{margin:0}
+body{background:#F6E3CD;color:var(--verde)}
 body{font-family:var(--ft);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:"kern"}
 h1,h2,h3,h4{margin:0;line-height:1;text-wrap:balance;font-family:var(--fd);font-weight:700;text-transform:uppercase;letter-spacing:.01em}
 p{margin:0}
@@ -69,6 +70,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ill{fill:currentColor;display:block}
 
 /* ---------- Barra del prototipo (herramienta, neutra) ---------- */
+#notes,#idx,#scn,.notes-p,.drawer{display:none!important}
 .proto{display:none!important;position:fixed;inset:0 0 auto;z-index:60;background:#1D1D1B;color:#f2f2f2;padding-top:env(safe-area-inset-top,0px);padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
 .proto .in{height:var(--pbh);display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:12px}
 .pbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid #555;background:transparent;color:#f2f2f2;border-radius:3px;cursor:pointer;font-family:var(--fm);font-size:12px;white-space:nowrap}
@@ -1487,7 +1489,7 @@ main .wrap:empty{display:block;height:24px}
 </div>
 <aside id="idx" class="drawer left" hidden aria-label="Índice de pantallas"></aside>
 <aside id="scn" class="drawer right" hidden aria-label="Escenarios"></aside>
-<aside id="notes" class="notes-p" hidden aria-label="Notas de la pantalla"></aside>
+<aside id="notes" class="notes-p" hidden inert aria-label="Notas de la pantalla"></aside>
 <div id="stage" class="stage"><div id="site" class="site"></div></div>
 <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
@@ -1591,6 +1593,7 @@ const fmtT=t=>new Intl.DateTimeFormat('es-DO',{hour:'numeric',minute:'2-digit'})
 const firstName=()=>(S.name||'Cuenta').split(' ')[0];
 S.cart=(S.cart||[]).filter(l=>PRODUCTS.some(p=>p.id===l.pid));
 if(S.role==='equipo'){S.role='visitante';S.name='';S.email=''}
+S.notesOpen=false;S.device='desk';
 const loggedIn=()=>S.role!=='visitante';
 const isArtist=()=>S.role==='artista';
 
@@ -2552,7 +2555,7 @@ function applySeo(b){const sc=b.sc,k=sc.key||'',base=(b.r&&b.r.base)||k;const pr
  document.title=t;document.documentElement.lang='es-DO';setMeta('description',d);setMeta('robots',priv?'noindex, nofollow':'index, follow');setMeta('og:title',t,1);setMeta('og:description',d,1)}
 function chrome(b){const sc=b.sc;document.getElementById('p-code').textContent=sc.c;document.getElementById('p-title').textContent=sc.t;document.getElementById('p-flow').textContent=sc.f?'· '+sc.f:'';
  applySeo(b);
- const notesOpen=S.notesOpen==null?window.innerWidth>1300:S.notesOpen;const np=document.getElementById('notes');np.hidden=!notesOpen;
+ const notesOpen=false;S.device='desk';const np=document.getElementById('notes');np.hidden=!notesOpen;
  document.getElementById('b-notes').setAttribute('aria-pressed',notesOpen);document.getElementById('stage').classList.toggle('withnotes',notesOpen);
  np.innerHTML=`<div class="btnrow" style="justify-content:space-between"><span class="pcode" style="background:#111;color:#fff;padding:2px 6px;font-family:var(--fm);font-size:12px">${sc.c}</span><button class="btn ter sm" data-pact="notes" aria-label="Cerrar notas">Cerrar</button></div><h2>${sc.t}</h2><p class="nf">Módulo: ${sc.m}<br>Flujos: ${sc.f||'—'}</p><p class="nh">Qué hay y cómo se comporta</p><ul>${sc.n.map(x=>`<li>${x}</li>`).join('')}</ul><p class="nh">Sesión simulada</p><p>${({visitante:'Visitante sin sesión',asistente:'Asistente: ',artista:'Artista: ',equipo:'Equipo: '})[S.role]}${esc(S.name)}</p><p class="nh">Identidad aplicada</p><p>Tipografías del proyecto: <b>Buena Música</b> (títulos, solo mayúsculas; variante Espiral en momentos destacados) y <b>SBM Marea</b> (texto). Dominantes: crema, naranja y los dos azules; rojo y negro como acento.</p><div class="swatches">${[['Verde','#003B3A'],['Agua','#419D99'],['Crema','#F6E3CD'],['Naranja','#E29312'],['Rojo · acento','#BC231E'],['Negro · acento','#1D1D1B']].map(c=>`<span><i style="background:${c[1]}"></i>${c[0]} ${c[1]}</span>`).join('')}</div><p class="nh">Referencia</p><p><a href="${FLOWS_URL}" target="_blank" rel="noopener">Diagramas de flujo ${svg('ext')}</a></p><p style="margin-top:16px;font-size:12.5px;color:#555">Contenido de ejemplo salvo fecha y lugar. Formularios, boletas, pagos y notificaciones son simulaciones sin conexión a sistemas reales.</p>`;
  const st=document.getElementById('stage');st.classList.toggle('mob',S.device==='mob');document.querySelectorAll('[data-pact="dev"]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===S.device));

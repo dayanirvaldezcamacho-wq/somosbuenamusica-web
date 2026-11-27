@@ -483,6 +483,17 @@ a.card.pcard{display:grid;gap:8px;text-decoration:none;padding:12px 12px 18px;al
 .pimg img{position:absolute;inset:8%;width:84%;height:84%;object-fit:contain;transition:scale .25s cubic-bezier(.3,1.6,.5,1)}
 .pcard:hover .pimg img{scale:1.05}
 .pimg.big img{inset:6%;width:88%;height:88%}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.ntile{display:grid;border:2.5px solid var(--verde);border-radius:16px;background:var(--surf);overflow:hidden;transition:rotate .2s cubic-bezier(.3,1.6,.5,1)}
+.ntile.on{background:var(--verde);color:var(--crema);rotate:-2deg}
+.ntog{display:grid;justify-items:center;gap:2px;padding:8px 4px 4px;background:none;border:0;color:inherit;font:inherit;cursor:pointer}
+.ntog img{width:46px;height:46px;object-fit:contain}
+.ntog b{font-size:15px;line-height:1.1}
+.nstep{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;border-top:2px solid currentColor}
+.nstep button{min-height:36px;background:none;border:0;color:inherit;font:inherit;font-size:20px;font-weight:800;cursor:pointer}
+.nstep button:disabled{opacity:.3;cursor:default}
+.nstep span{min-width:22px;text-align:center;font-weight:800;font-size:15px}
+.ntog:focus-visible,.nstep button:focus-visible{outline:3px solid var(--naranja);outline-offset:-3px}
 .numchips{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
 .numchips .vchip span{display:grid;justify-items:center;gap:2px;padding:6px 4px}
 .numchips .vchip img{width:40px;height:40px;object-fit:contain}
@@ -1646,6 +1657,10 @@ function posterArt(a,big){const q=typeof a.id==='number'?a.id:1;const t=['rojo',
 function coverArt(p,ratio,big){const t=['rojo','verde','agua'][hsh(p.t)%3];const art=p.cat==='artistas'?(GI[(ARTISTS.find(a=>p.href==='c03-'+a.id)||{}).g]||'mic'):CI[p.cat];
  return `<div class="art cov t-${t}${big?' cov-long':''}" style="aspect-ratio:${ratio||'16/10'};--rot:-10deg" role="img" aria-label="Portada: ${esc(p.t)}">${ic(art,'art-i')}</div>`}
 const numOf=o=>String(o).replace('N.º ','');
+const PQ=pid=>{UI.pq=UI.pq||{};return UI.pq[pid]=UI.pq[pid]||{}};
+function numGrid(pr){const q=PQ(pr.id);const nums=pr.v['Número'].filter(o=>q[o]>0);const units=nums.reduce((a,o)=>a+q[o],0);const what=pr.id===112?'pin':'parche';
+ return `<fieldset class="fld"><legend>Elige tus ${pr.id===112?'pines':'parches'}${nums.length?`: ${nums.length} ${nums.length>1?'diseños':'diseño'} · ${units} ${units>1?'unidades':'unidad'}`:''}</legend><p class="tiny" style="margin:0 0 8px">Toca un ${what} para elegirlo y usa − y + para la cantidad. Tócalo de nuevo para quitarlo.</p>
+ <div class="numgrid">${pr.v['Número'].map(o=>{const n=numOf(o),k=q[o]||0;return `<div class="ntile${k?' on':''}"><button type="button" class="ntog" data-act="ntog" data-arg="${pr.id}|${o}" aria-pressed="${k>0}" aria-label="${what} ${n}${k?', '+k+' en tu selección':''}"><img src="${MERCH}${pr.img}-${n.padStart(2,'0')}.webp" alt="" loading="lazy"><b>${n}</b></button><div class="nstep"><button type="button" data-act="nqty" data-arg="${pr.id}|${o}|-1" aria-label="Quitar uno del ${what} ${n}"${k?'':' disabled'}>−</button><span aria-live="polite">${k}</span><button type="button" data-act="nqty" data-arg="${pr.id}|${o}|1" aria-label="Sumar uno al ${what} ${n}">+</button></div></div>`}).join('')}</div></fieldset>`}
 function prodArt(p,big,sel){const color=sel&&typeof sel==='object'?sel.Color:sel;if(p.img){const k=pimgKey(p,color);return `<div class="pimg${big?' big':''}"><img src="${MERCH}${k}${big?'':'-card'}.webp" alt="${esc(p.n)}${p.v.Color?' · '+esc(color||p.v.Color[0]):''}" loading="${big?'eager':'lazy'}" decoding="async"></div>`}const t=['naranja','verde','agua','crema','verde','naranja'][(p.id-1)%6];return `<div class="art t-${t}" style="aspect-ratio:1/1;--rot:${p.id%2?-8:7}deg" role="img" aria-label="Ilustración de ${esc(p.n)}">${ic(PI[p.id]||'sol','art-i')}${big?`<span class="art-cap">Ilustración provisional · ${esc(p.n)}</span>`:''}</div>`}
 
 function stickers(list){return list.map(([cls,v,inner])=>`<div class="stk ${cls}" style="${v}">${inner}</div>`).join('')}
@@ -2232,16 +2247,16 @@ def('t01',{m:'Tienda',c:'T01',t:'Tienda',f:'F14',n:['Explorar y usar el carrito 
 
 def('t02',{m:'Tienda',c:'T02',t:'Producto',f:'F14',route:'t02-101',n:['Galería (imagen principal y miniaturas), nombre, precio, descripción, variantes, guía de tallas, disponibilidad por combinación y cantidad.','Productos reales de la merch. Precios sugeridos pendientes de confirmar; existencias por definir.','Añadir sin elegir variante → error. Cantidad mayor que las existencias → error.','Móvil: barra inferior fija con «Añadir al carrito».'],
  r(p){if(S.tienda!=='activa')return {redirect:'t01'};const pr=PRODUCTS.find(x=>x.id===+p);if(!pr)return {redirect:'e01'};
- UI.sel=UI.sel||{};const sel=UI.sel[pr.id]=UI.sel[pr.id]||{};const keys=Object.keys(pr.v);const filled=k=>Array.isArray(sel[k])?sel[k].length>0:!!sel[k];const complete=keys.every(filled);const k=vkey(pr,sel);const stk=complete?(Array.isArray(sel['Número'])?Math.min(...sel['Número'].map(n=>stockOf(pr,vkey(pr,{...sel,'Número':n})))):stockOf(pr,k)):null;
+ UI.sel=UI.sel||{};const sel=UI.sel[pr.id]=UI.sel[pr.id]||{};const keys=Object.keys(pr.v);const filled=k=>k==='Número'?Object.values(PQ(pr.id)).some(x=>x>0):Array.isArray(sel[k])?sel[k].length>0:!!sel[k];const complete=keys.every(filled);const k=vkey(pr,sel);const stk=complete?(keys.includes('Número')?pr.def:stockOf(pr,k)):null;
  const avail=soldOut(pr)?chip('Agotado','dash'):!complete?`<span class="tiny">Elige ${keys.map(x=>x.toLowerCase()).join(' y ')} para ver la disponibilidad.</span>`:stk===0?chip('Agotado en esta combinación','dash'):stk<=3?chip('Quedan '+stk):chip('Disponible');
  const addBtn=soldOut(pr)||(complete&&stk===0)?btn('Agotado',{dis:1,block:1})+btn('Avísame si vuelve · Fase 3',{dis:1,sm:1,block:1}):btn('Añadir al carrito',{act:'add',arg:pr.id,block:1});
  return `<div class="wrap">${crumbs([['t01','Tienda'],['',pr.n]])}<div class="split" style="padding-block:24px 72px"><div class="stack">${prodArt(pr,1,sel)}${pr.v.Color?`<div class="pthumbs" role="group" aria-label="Colores">${pr.v.Color.map(c=>`<button type="button" data-act="pcolor" data-arg="${pr.id}|${c}" aria-pressed="${(sel.Color||pr.v.Color[0])===c}" aria-label="Ver en ${c}"><img src="${MERCH}${pimgKey(pr,c)}-card.webp" alt="" loading="lazy"></button>`).join('')}</div>`:''}</div>
  <div class="stack lg"><div class="stack sm"><p class="eyebrow">${pr.cat}</p><h1>${pr.n}</h1><p style="font-size:22px;font-weight:800" class="num">${money(pr.p)}</p></div><p class="muted">${pr.d}</p>
  ${UI.addErr?alertBox('err',UI.addErr):''}
- ${keys.map(key=>`<fieldset class="fld"><legend>${key}${Array.isArray(sel[key])?(sel[key].length?': '+sel[key].map(numOf).join(', '):''):sel[key]?': '+sel[key]:''}</legend>${key==='Número'?'<p class="tiny" style="margin:0 0 8px">Puedes elegir varios. Toca de nuevo un número para quitarlo.</p>':''}<div class="vchips${key==='Número'?' numchips':''}">${pr.v[key].map(o=>`<label class="vchip">${key==='Número'?`<input type="checkbox" id="v-${pr.id}-n${numOf(o)}" name="${key}" value="${o}"${(sel[key]||[]).includes(o)?' checked':''} data-chg="pnum" data-pid="${pr.id}" aria-label="${o}">`:`<input type="radio" id="v-${pr.id}-${key}-${o.replace(/[\s.º]/g,'')}" name="${key}" value="${o}"${sel[key]===o?' checked':''} data-chg="sel" data-pid="${pr.id}">`}<span>${key==='Número'?`<img src="${MERCH}${pr.img}-${numOf(o).padStart(2,'0')}.webp" alt="" loading="lazy"><b>${numOf(o)}</b>`:o}</span></label>`).join('')}</div></fieldset>`).join('')}
+ ${keys.map(key=>key==='Número'?numGrid(pr):`<fieldset class="fld"><legend>${key}${Array.isArray(sel[key])?(sel[key].length?': '+sel[key].map(numOf).join(', '):''):sel[key]?': '+sel[key]:''}</legend>${key==='Número'?'<p class="tiny" style="margin:0 0 8px">Puedes elegir varios. Toca de nuevo un número para quitarlo.</p>':''}<div class="vchips${key==='Número'?' numchips':''}">${pr.v[key].map(o=>`<label class="vchip">${key==='Número'?`<input type="checkbox" id="v-${pr.id}-n${numOf(o)}" name="${key}" value="${o}"${(sel[key]||[]).includes(o)?' checked':''} data-chg="pnum" data-pid="${pr.id}" aria-label="${o}">`:`<input type="radio" id="v-${pr.id}-${key}-${o.replace(/[\s.º]/g,'')}" name="${key}" value="${o}"${sel[key]===o?' checked':''} data-chg="sel" data-pid="${pr.id}">`}<span>${key==='Número'?`<img src="${MERCH}${pr.img}-${numOf(o).padStart(2,'0')}.webp" alt="" loading="lazy"><b>${numOf(o)}</b>`:o}</span></label>`).join('')}</div></fieldset>`).join('')}
  ${keys.includes('Talla')?`<details class="acc"><summary>Guía de tallas</summary><div class="ans"><div class="tblw"><table class="tbl" style="min-width:0"><thead><tr><th>Talla</th><th>Pecho (cm)</th><th>Largo (cm)</th></tr></thead><tbody>${['S','M','L','XL'].map(t=>`<tr><td>${t}</td><td>Por definir</td><td>Por definir</td></tr>`).join('')}</tbody></table></div></div></details>`:''}
  <div>${avail}</div>
- <div class="fld"><label for="qty">Cantidad</label><div class="qty"><button type="button" data-act="qtyIn" data-arg="-1" aria-label="Restar uno">−</button><input id="qty" inputmode="numeric" value="${UI.qty||1}" aria-label="Cantidad"><button type="button" data-act="qtyIn" data-arg="1" aria-label="Sumar uno">+</button></div></div>
+ ${keys.includes('Número')?'':`<div class="fld"><label for="qty">Cantidad</label><div class="qty"><button type="button" data-act="qtyIn" data-arg="-1" aria-label="Restar uno">−</button><input id="qty" inputmode="numeric" value="${UI.qty||1}" aria-label="Cantidad"><button type="button" data-act="qtyIn" data-arg="1" aria-label="Sumar uno">+</button></div></div>`}
  <div class="stack sm hide-n">${addBtn}</div>
  <dl class="kv" style="font-size:14px">${pr.cat==='Ropa'?'<dt>Material</dt><dd>Por definir</dd>':''}<dt>Entrega</dt><dd>Opciones por definir</dd><dt>Cambios</dt><dd>Política por definir</dd></dl></div></div></div>
  <div class="mcta">${addBtn}</div>`}});
@@ -2595,6 +2610,8 @@ function loginAs(role,email,name){if(role==='equipo')role='asistente';S.role=rol
 function nameFromEmail(e){const l=e.split('@')[0].replace(/[._-]+/g,' ').replace(/\b(artista|equipo)\b/g,'').trim();return (l?l.replace(/\b\w/g,c=>c.toUpperCase()):'Persona')}
 const ACT={
   pnumAll(a){UI.sel=UI.sel||{};if(UI.sel[a])delete UI.sel[a]['Número'];render()},
+  ntog(a){const [pid,o]=String(a).split('|');const q=PQ(+pid);q[o]=q[o]>0?0:1;UI.addErr=null;UI.refocus=null;render();const b=document.querySelector(`[data-act=ntog][data-arg="${pid}|${o}"]`);if(b)b.focus()},
+  nqty(a){const [pid,o,d]=String(a).split('|');const q=PQ(+pid);q[o]=Math.max(0,Math.min(20,(q[o]||0)+(+d)));UI.addErr=null;render();const b=document.querySelector(`[data-act=nqty][data-arg="${pid}|${o}|${d}"]`);if(b&&!b.disabled)b.focus();else{const t=document.querySelector(`[data-act=ntog][data-arg="${pid}|${o}"]`);if(t)t.focus()}},
   pcolor(a){const [id,c]=String(a).split('|');UI.sel=UI.sel||{};UI.sel[id]=UI.sel[id]||{};UI.sel[id].Color=c;UI.addErr=null;render()},
  menu(){UI.menu=!UI.menu;render()},
  gscroll(d){const g=document.querySelector('.gantt');if(g)g.scrollBy({left:(+d)*Math.max(240,g.clientWidth*.6),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})},
@@ -2622,10 +2639,11 @@ const ACT={
  demoFiles(){UI.files=[{n:'escenario-noche.jpg',s:3.2*1048576},{n:'publico-01.png',s:5.8*1048576},{n:'video-corto.mov',s:22*1048576,e:'Formato no admitido. Usa JPG o PNG.'}];UI.upErr=null;render()},
  rmFile(i){UI.files.splice(+i,1);render()},
  add(pid){const pr=PRODUCTS.find(x=>x.id===+pid);const sel=(UI.sel||{})[pr.id]||{};const keys=Object.keys(pr.v);const q=Math.max(1,parseInt((document.getElementById('qty')||{}).value||UI.qty||1,10)||1);
-  if(!keys.every(k=>Array.isArray(sel[k])?sel[k].length:sel[k])){UI.addErr=keys.includes('Número')?'Elige al menos un número antes de añadir.':'Elige '+keys.map(x=>x.toLowerCase()).join(' y ')+' antes de añadir.';render();return}
-  if(Array.isArray(sel['Número'])){const nums=sel['Número'];if(takeErr()){UI.addErr='No se pudo añadir al carrito. Inténtalo de nuevo.';render();return}
-   nums.forEach(n=>{const k=vkey(pr,{...sel,'Número':n});const l=S.cart.find(l=>l.pid===pr.id&&l.k===k);if(l)l.q+=q;else S.cart.push({pid:pr.id,k,q})});
-   UI.sel[pr.id]['Número']=[];UI.addErr=null;UI.qty=1;save();render();toast(nums.length>1?`Añadidos ${nums.length} diseños al carrito`:'Añadido al carrito',`<a href="#t03">Ver carrito</a><button type="button" data-act="hideToast">Seguir comprando</button>`);return}
+  if(keys.includes('Número')){const q=PQ(pr.id);const nums=pr.v['Número'].filter(o=>q[o]>0);if(!nums.length){UI.addErr='Elige al menos un '+(pr.id===112?'pin':'parche')+' antes de añadir.';render();return}
+   if(takeErr()){UI.addErr='No se pudo añadir al carrito. Inténtalo de nuevo.';render();return}
+   let units=0;nums.forEach(o=>{const k=vkey(pr,{'Número':o});const l=S.cart.find(l=>l.pid===pr.id&&l.k===k);units+=q[o];if(l)l.q+=q[o];else S.cart.push({pid:pr.id,k,q:q[o]})});
+   UI.pq[pr.id]={};UI.addErr=null;save();render();toast(`Añadido al carrito: ${units} ${units>1?'unidades':'unidad'}`,`<a href="#t03">Ver carrito</a><button type="button" data-act="hideToast">Seguir comprando</button>`);return}
+  if(!keys.every(k=>sel[k])){UI.addErr='Elige '+keys.map(x=>x.toLowerCase()).join(' y ')+' antes de añadir.';render();return}
   const k=vkey(pr,sel);const st=stockOf(pr,k);const inCart=(S.cart.find(l=>l.pid===pr.id&&l.k===k)||{q:0}).q;
   if(q+inCart>st){UI.addErr=`Solo quedan ${st} unidades${inCart?` y ya tienes ${inCart} en el carrito`:''}. Ajusta la cantidad.`;render();return}
   if(takeErr()){UI.addErr='No se pudo añadir al carrito. Inténtalo de nuevo.';render();return}
@@ -2654,7 +2672,6 @@ const ACT={
  reset(){try{localStorage.removeItem('asbm-hifi-v2')}catch(e){}S=SEED();UI={};save();go('p01');drawScn()}
 };
 const CHG={
- pnum(v,el){const pid=+el.dataset.pid;UI.sel=UI.sel||{};const o=UI.sel[pid]=UI.sel[pid]||{};const a=(o['Número']||[]).filter(x=>x!==el.value);if(el.checked)a.push(el.value);o['Número']=PRODUCTS.find(p=>p.id===pid).v['Número'].filter(x=>a.includes(x));UI.addErr=null;UI.refocus=el.id;render()},
  sel(v,el){const pid=+el.dataset.pid;UI.sel=UI.sel||{};UI.sel[pid]=UI.sel[pid]||{};UI.sel[pid][el.name]=v;UI.addErr=null;UI.refocus=el.id;render()},
  ent(v){UI.ent=v;render()},
  met(v){UI.met=v;render()},

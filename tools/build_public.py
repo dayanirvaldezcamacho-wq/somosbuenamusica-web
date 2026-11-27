@@ -19,5 +19,8 @@ rep("function loginAs(role,email,name){", "function loginAs(role,email,name){if(
 rep("if(k==='role'){", "if(k==='role'){if(v==='equipo')v='asistente';")
 # 4. Si quedó un rol de equipo guardado en el navegador, se descarta
 rep("const loggedIn=()=>", "if(S.role==='equipo'){S.role='visitante';S.name='';S.email=''}\nconst loggedIn=()=>")
+# 5. En el dominio propio, el icono se sirve como archivo (mejor caché)
+import re as _re
+s = _re.sub(r'<link rel="icon" type="image/svg\+xml" href="data:[^"]+">', '<link rel="icon" href="/favicon.ico" sizes="any">\n<link rel="icon" type="image/svg+xml" href="/favicon.svg">', s, count=1)
 (root / 'index.html').write_text(s, encoding='utf-8')
 print('index.html generado')

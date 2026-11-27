@@ -1549,6 +1549,7 @@ const fmtD=t=>new Intl.DateTimeFormat('es-DO',{weekday:'long',day:'numeric',mont
 const fmtDs=t=>new Intl.DateTimeFormat('es-DO',{day:'numeric',month:'short',year:'numeric'}).format(t);
 const fmtT=t=>new Intl.DateTimeFormat('es-DO',{hour:'numeric',minute:'2-digit'}).format(t);
 const firstName=()=>(S.name||'Cuenta').split(' ')[0];
+if(S.role==='equipo'){S.role='visitante';S.name='';S.email=''}
 const loggedIn=()=>S.role!=='visitante';
 const isArtist=()=>S.role==='artista';
 
@@ -2452,7 +2453,7 @@ def('e03',{m:'Sistema',c:'E03',t:'Sin permiso',f:'F00',n:['Cuando una cuenta int
  r(){return stateScreen({ic:'alert',e:'Acceso restringido',t:'No tienes acceso a esta sección',b:'Esta sección es para otro tipo de cuenta.',a:btn('Ir a mi inicio',{href:homeFor()})})}});
 
 /* ---------------- Puerta de autenticación (F00) ---------------- */
-function gate(req,route){
+function gate(req,route){  if(req==='equipo')return 'e03';
  if(!loggedIn()){S.pending=route;save();return 's01'}
  if(req==='artista'&&!isArtist()){if(S.role==='asistente'){S.pending=route;save();return 'ar02-activar'}return 'e03'}
  if(req==='equipo'&&S.role!=='equipo')return 'e03';
@@ -2530,7 +2531,7 @@ const SCN=[
 function drawScn(){const el=document.getElementById('scn');const val=k=>k==='profile'?(profOK()?'si':'no'):S[k];
  el.innerHTML=`<div class="dh"><h2>Escenarios</h2><button class="btn ter sm" data-pact="scn">Cerrar</button></div><p class="tiny">Cambian el estado simulado de la plataforma para ver cada variante de la pantalla actual.</p>`+SCN.map(([k,l,opts])=>`<div class="scn-row"><label for="scn-${k}">${l}</label><select id="scn-${k}" data-scn="${k}">${opts.map(o=>`<option value="${o[0]}"${String(val(k))===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></div>`).join('')+`<div class="btnrow" style="margin-top:16px">${btn('Reiniciar prototipo',{act:'reset',k:'sec',sm:1})}</div>`}
 function setScn(k,v){
- if(k==='role'){S.role=v;const N={asistente:['Asistente','maria@ejemplo.com'],artista:['Nombre artístico','nia.artista@ejemplo.com'],equipo:['Equipo ASBM','equipo@ejemplo.com'],visitante:['','']}[v];S.name=N[0];S.email=N[1];if(v==='visitante'){S.guest=false}}
+ if(k==='role'){if(v==='equipo')v='asistente';S.role=v;const N={asistente:['Asistente','maria@ejemplo.com'],artista:['Nombre artístico','nia.artista@ejemplo.com'],equipo:['Equipo ASBM','equipo@ejemplo.com'],visitante:['','']}[v];S.name=N[0];S.email=N[1];if(v==='visitante'){S.guest=false}}
  else if(k==='profile'){S.prof=v==='si'?JSON.parse(JSON.stringify(PROF_FULL)):{...PROF_PART}}
  else if(k==='app'){S.waitOffer=false;if(v==='ninguna')setApp('ninguna',1);else{if(!S.draft.formato)S.draft={disp:'Sí',ciudad:'San Pedro de Macorís',eleg:'Sí',formato:'Acústico',dur:'30 minutos',mot:'Propuesta de ejemplo.',mmus:S.prof.musica||'https://plataforma-de-musica.ejemplo/nia'};setApp(v,1)}}
  else if(k==='fest'){S.fest=v;S.festAt=Date.now()}
@@ -2558,7 +2559,7 @@ function validate(f){let bad=[];f.querySelectorAll('.fld.bad').forEach(x=>x.clas
 let toastT;
 function toast(msg,acts=''){const t=document.getElementById('toast');if(!t)return;t.innerHTML=`<span>${msg}</span>${acts}`;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},5000)}
 function go(r){if(location.hash==='#'+r)render();else location.hash=r}
-function loginAs(role,email,name){S.role=role;S.email=email;S.name=name;if(role==='artista'&&profPct()<50){} const p=S.pending;S.pending=null;UI={};save();go(p||homeFor())}
+function loginAs(role,email,name){if(role==='equipo')role='asistente';S.role=role;S.email=email;S.name=name;if(role==='artista'&&profPct()<50){} const p=S.pending;S.pending=null;UI={};save();go(p||homeFor())}
 function nameFromEmail(e){const l=e.split('@')[0].replace(/[._-]+/g,' ').replace(/\b(artista|equipo)\b/g,'').trim();return (l?l.replace(/\b\w/g,c=>c.toUpperCase()):'Persona')}
 const ACT={
  menu(){UI.menu=!UI.menu;render()},
